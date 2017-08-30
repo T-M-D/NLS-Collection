@@ -1,0 +1,444 @@
+# Nagios Core Filter
+* This filter takes the Nagios Core log data and stores it into many fields
+* This filter works with Nagios XI as it uses Nagios Core in the backend
+* To create the filter in Nagios Log Server
+ * Administration > Global Configuration > Inputs > Add Filter
+
+* Your Nagios server will need to send the log data tagged as "nagios_core" for this filter to work
+* To confgure your Nagios server to do this, execute the following commands on your Nagios server (replace xxx.xxx.xxx.xxx with your Nagios Log Server address)
+ * curl -s -O http://xxx.xxx.xxx.xxx/nagioslogserver/scripts/setup-linux.sh
+ * sudo bash setup-linux.sh -s xxx.xxx.xxx.xxx -p 5544 -f "/usr/local/nagios/var/nagios.log" -t nagios_core
+
+* The remaining text below is what needs to be added to Nagios Log Server as an input
+
+if [program] == 'nagios_core' {
+	grok {
+		match => [ 'message', '\[%{NUMBER:epoch_timestamp}\] %{GREEDYDATA:message}' ]
+		overwrite => [ 'message' ]
+	}
+	if [message] =~ /^Warning:|Error:/ {
+		grok {
+			match => [ 'message', '%{DATA:nagios_severity_label}: %{GREEDYDATA}' ]
+		}
+	}
+	if [message] =~ /check\sof\shost|check\sfor\shost/ {
+		grok {
+			match => [ 'message', '%{DATA} \'%{DATA:nagios_host}\' %{GREEDYDATA}' ]
+		}
+	}
+	if [message] =~ /service.*on\shost/ {
+		grok {
+			match => [ 'message', '%{DATA} \'%{DATA:nagios_service}\' %{DATA} \'%{DATA:nagios_host}\'' ]
+		}
+	}
+	if [message] =~ /wproc:/ {
+		if [message] =~ /host=.*;\sservice=/ {
+			grok {
+				match => [ 'message', '%{DATA}host=%{DATA:nagios_host}; service=%{DATA:nagios_service};' ]
+			}
+		}
+		if [message] =~ /job.*return\scode/ {
+			grok {
+				match => [ 'message', '%{DATA}: %{DATA:nagios_job} job%{DATA} return code %{NUMBER:nagios_return_code}' ]
+			}
+		}
+	}
+	if [message] =~ /Return\scode\sof/ {
+		grok {
+			match => [ 'message', '%{DATA} %{NUMBER:nagios_return_code} %{GREEDYDATA}' ]
+		}
+	}
+	if [message] =~ /Host\s\'|results\sof\shost\s'/ {
+		grok {
+			match => [ 'message', '%{DATA} \'%{DATA:nagios_host}\' %{GREEDYDATA}' ]
+		}
+	}
+	if [message] =~ /Service\s\'/ {
+		grok {
+			match => [ 'message', '%{DATA} \'%{DATA:nagios_service}\' %{DATA} \'%{DATA:nagios_host}\' %{GREEDYDATA}' ]
+		}
+	}
+	if [message] =~ /^HOST\sALERT:/ {
+		grok {
+			match => [ 'message', '%{DATA:nagios_severity_label}: %{DATA:nagios_host};%{DATA:nagios_host_status};%{DATA:nagios_host_state};%{NUMBER:nagios_host_attempt};%{GREEDYDATA:nagios_host_output}' ]
+		}
+	}
+	if [message] =~ /^SERVICE\sALERT:/ {
+		grok {
+			match => [ 'message', '%{DATA:nagios_severity_label}: %{DATA:nagios_host};%{DATA:nagios_service};%{DATA:nagios_service_status};%{DATA:nagios_service_state};%{NUMBER:nagios_service_attempt};%{GREEDYDATA:nagios_service_output}' ]
+		}
+	}
+	if [message] =~ /^CURRENT\sHOST\sSTATE:/ {
+		grok {
+			match => [ 'message', '%{DATA:nagios_severity_label}: %{DATA:nagios_host};%{DATA:nagios_host_status};%{DATA:nagios_host_state};%{NUMBER:nagios_host_attempt};%{GREEDYDATA:nagios_host_output}' ]
+		}
+	}
+	if [message] =~ /^CURRENT\sSERVICE\sSTATE:/ {
+		grok {
+			match => [ 'message', '%{DATA:nagios_severity_label}: %{DATA:nagios_host};%{DATA:nagios_service};%{DATA:nagios_service_status};%{DATA:nagios_service_state};%{NUMBER:nagios_service_attempt};%{GREEDYDATA:nagios_service_output}' ]
+		}
+	}
+	if [message] =~ /^HOST\sNOTIFICATION:/ {
+		grok {
+			match => [ 'message', '%{DATA:nagios_severity_label}: %{DATA:nagios_contact};%{DATA:nagios_host};%{DATA:nagios_host_status};%{DATA:nagios_command};%{GREEDYDATA:nagios_host_output}' ]
+		}
+	}
+	if [message] =~ /^SERVICE\sNOTIFICATION:/ {
+		grok {
+			match => [ 'message', '%{DATA:nagios_severity_label}: %{DATA:nagios_contact};%{DATA:nagios_host};%{DATA:nagios_service};%{DATA:nagios_service_status};%{DATA:nagios_command};%{GREEDYDATA:nagios_service_output}' ]
+		}
+	}
+	if [message] =~ /DOWNTIME\sALERT:/ {
+		if [message] =~ /^HOST\sDOWNTIME/ {
+			grok {
+				match => [ 'message', '%{DATA:nagios_alert}: %{DATA:nagios_host};%{DATA:nagios_downtime_state};' ]
+			}
+		}
+		if [message] =~ /^SERVICE\sDOWNTIME/ {
+			grok {
+				match => [ 'message', '%{DATA:nagios_alert}: %{DATA:nagios_host};%{DATA:nagios_service};%{DATA:nagios_downtime_state};' ]
+			}
+		}
+	}
+	if [message] =~ /FLAPPING\sALERT:/ {
+		if [message] =~ /^HOST\sFLAPPING/ {
+			grok {
+				match => [ 'message', '%{DATA:nagios_alert}: %{DATA:nagios_host};%{DATA:nagios_flapping_state};' ]
+			}
+		}
+		if [message] =~ /^SERVICE\sFLAPPING/ {
+			grok {
+				match => [ 'message', '%{DATA:nagios_alert}: %{DATA:nagios_host};%{DATA:nagios_service};%{DATA:nagios_flapping_state};' ]
+			}
+		}
+		grok {
+			match => [ 'message', '%{DATA}\(%{NUMBER:nagios_flapping_value}%{DATA}%{NUMBER:nagios_flapping_threshold}' ]
+		}
+	}
+	if [message] =~ /HOST\sEVENT\sHANDLER:/ {
+		grok {
+			match => [ 'message', '%{DATA}: %{DATA:nagios_host};%{DATA:nagios_host_status};%{DATA:nagios_host_state};%{NUMBER:nagios_host_attempt};%{GREEDYDATA:nagios_command}' ]
+		}
+	}
+	if [message] =~ /SERVICE\sEVENT\sHANDLER:/ {
+		grok {
+			match => [ 'message', '%{DATA}: %{DATA:nagios_host};%{DATA:nagios_service};%{DATA:nagios_service_status};%{DATA:nagios_service_state};%{NUMBER:nagios_service_attempt};%{GREEDYDATA:nagios_command}' ]
+		}
+	}
+	if [message] =~ /contact\s\'|Contact\s\'/ {
+		grok {
+			match => [ 'message', '%{DATA} \'%{DATA:nagios_contact}\'' ]
+		}
+	}
+	if [message] =~ /^EXTERNAL\sCOMMAND:/ {
+		grok {
+			match => [ 'message', '%{DATA}: %{DATA:nagios_external_command};%{GREEDYDATA}' ]
+		}
+		if [message] =~ /DEL_ALL_HOST_COMMENTS|ABLE_ALL_NOTIFICATIONS_BEYOND_HOST|ABLE_HOST_AND_CHILD_NOTIFICATION|ABLE_HOST_CHECK|ABLE_HOST_EVENT_HANDLER|ABLE_HOST_FLAP_DETECTION|ABLE_HOST_SVC_CHECKS|ABLE_HOST_SVC_NOTIFICATIONS|ABLE_PASSIVE_HOST_CHECKS|REMOVE_HOST_ACKNOWLEDGEMENT|_OBSESSING_OVER_HOST/ {
+			grok {
+				match => [ 'message', '%{DATA};%{GREEDYDATA:nagios_host}' ]
+			}
+		}
+		if [message] =~ /DEL_ALL_SVC_COMMENTS|ABLE_PASSIVE_SVC_CHECKS|ABLE_SVC_CHECK|ABLE_SVC_EVENT_HANDLER|ABLE_SVC_FLAP_DETECTION|ABLE_SVC_NOTIFICATIONS|REMOVE_SVC_ACKNOWLEDGEMENT|_OBSESSING_OVER_SVC/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{GREEDYDATA:nagios_service}' ]
+			}
+		}
+		if [message] =~ /SCHEDULE_FORCED_HOST_CHECK|SCHEDULE_FORCED_HOST_SVC_CHECKS|SCHEDULE_HOST_CHECK|SCHEDULE_HOST_SVC_CHECKS/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{GREEDYDATA:nagios_epoch_check_time}' ]
+			}
+			date {
+				match => ['nagios_epoch_check_time', 'UNIX' ]
+				target => 'nagios_check_time'
+				remove_field => [ 'nagios_epoch_check_time' ]
+			}
+		}
+		if [message] =~ /SCHEDULE_FORCED_SVC_CHECK|SCHEDULE_SVC_CHECK/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{DATA:nagios_service};%{GREEDYDATA:nagios_epoch_check_time}' ]
+			}
+			date {
+				match => ['nagios_epoch_check_time', 'UNIX' ]
+				target => 'nagios_check_time'
+				remove_field => [ 'nagios_epoch_check_time' ]
+			}
+		}
+		if [message] =~ /SCHEDULE_AND_PROPAGATE_HOST_DOWNTIME|SCHEDULE_AND_PROPAGATE_TRIGGERED_HOST_DOWNTIME|SCHEDULE_HOST_DOWNTIME|SCHEDULE_HOST_SVC_DOWNTIME/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{NUMBER:nagios_epoch_start_time};%{NUMBER:nagios_epoch_end_time};%{INT:nagios_downtime_fixed};%{NUMBER:nagios_downtime_trigger_id};%{NUMBER:nagios_downtime_duration};%{DATA:nagios_author};%{GREEDYDATA:nagios_comment}' ]
+			}
+			date {
+				match => ['nagios_epoch_start_time', 'UNIX' ]
+				target => 'nagios_downtime_start'
+				remove_field => [ 'nagios_epoch_start_time' ]
+			}
+			date {
+				match => ['nagios_epoch_end_time', 'UNIX' ]
+				target => 'nagios_downtime_end'
+				remove_field => [ 'nagios_epoch_end_time' ]
+			}
+		}
+		if [message] =~ /SCHEDULE_SVC_DOWNTIME/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{DATA:nagios_service};%{NUMBER:nagios_epoch_start_time};%{NUMBER:nagios_epoch_end_time};%{INT:nagios_downtime_fixed};%{NUMBER:nagios_downtime_trigger_id};%{NUMBER:nagios_downtime_duration};%{DATA:nagios_author};%{GREEDYDATA:nagios_comment}' ]
+			}
+			date {
+				match => ['nagios_epoch_start_time', 'UNIX' ]
+				target => 'nagios_downtime_start'
+				remove_field => [ 'nagios_epoch_start_time' ]
+			}
+			date {
+				match => ['nagios_epoch_end_time', 'UNIX' ]
+				target => 'nagios_downtime_end'
+				remove_field => [ 'nagios_epoch_end_time' ]
+			}
+		}
+		if [message] =~ /SCHEDULE_HOSTGROUP_HOST_DOWNTIME|SCHEDULE_HOSTGROUP_SVC_DOWNTIME/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_hostgroup};%{NUMBER:nagios_epoch_start_time};%{NUMBER:nagios_epoch_end_time};%{INT:nagios_downtime_fixed};%{NUMBER:nagios_downtime_trigger_id};%{NUMBER:nagios_downtime_duration};%{DATA:nagios_author};%{GREEDYDATA:nagios_comment}' ]
+			}
+			date {
+				match => ['nagios_epoch_start_time', 'UNIX' ]
+				target => 'nagios_downtime_start'
+				remove_field => [ 'nagios_epoch_start_time' ]
+			}
+			date {
+				match => ['nagios_epoch_end_time', 'UNIX' ]
+				target => 'nagios_downtime_end'
+				remove_field => [ 'nagios_epoch_end_time' ]
+			}
+		}
+		if [message] =~ /SCHEDULE_SERVICEGROUP_HOST_DOWNTIME|SCHEDULE_SERVICEGROUP_SVC_DOWNTIME/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_servicegroup};%{NUMBER:nagios_epoch_start_time};%{NUMBER:nagios_epoch_end_time};%{INT:nagios_downtime_fixed};%{NUMBER:nagios_downtime_trigger_id};%{NUMBER:nagios_downtime_duration};%{DATA:nagios_author};%{GREEDYDATA:nagios_comment}' ]
+			}
+			date {
+				match => ['nagios_epoch_start_time', 'UNIX' ]
+				target => 'nagios_downtime_start'
+				remove_field => [ 'nagios_epoch_start_time' ]
+			}
+			date {
+				match => ['nagios_epoch_end_time', 'UNIX' ]
+				target => 'nagios_downtime_end'
+				remove_field => [ 'nagios_epoch_end_time' ]
+			}
+		}
+		if [message] =~ /SEND_CUSTOM_HOST_NOTIFICATION/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{INT:nagios_notification_options};%{DATA:nagios_author};%{GREEDYDATA:nagios_comment}' ]
+			}
+		}
+		if [message] =~ /SEND_CUSTOM_SVC_NOTIFICATION/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{DATA:nagios_service};%{INT:nagios_notification_options};%{DATA:nagios_author};%{GREEDYDATA:nagios_comment}' ]
+			}
+		}
+		if [message] =~ /ADD_HOST_COMMENT/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{INT:nagios_persistent};%{DATA:nagios_author};%{GREEDYDATA:nagios_comment}' ]
+			}
+		}
+		if [message] =~ /ADD_SVC_COMMENT/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{DATA:nagios_service};%{INT:nagios_persistent};%{DATA:nagios_author};%{GREEDYDATA:nagios_comment}' ]
+			}
+		}
+		if [message] =~ /ACKNOWLEDGE_HOST_PROBLEM/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{INT:nagios_sticky};%{INT:nagios_notify};%{INT:nagios_persistent};%{DATA:nagios_author};%{GREEDYDATA:nagios_comment}' ]
+			}
+		}
+		if [message] =~ /ACKNOWLEDGE_SVC_PROBLEM/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{DATA:nagios_service};%{INT:nagios_sticky};%{INT:nagios_notify};%{INT:nagios_persistent};%{DATA:nagios_author};%{GREEDYDATA:nagios_comment}' ]
+			}
+		}
+		if [message] =~ /DEL_HOST_COMMENT|DEL_SVC_COMMENT/ {
+			grok {
+				match => [ 'message', '%{DATA};%{NUMBER:nagios_comment_id}' ]
+			}
+		}
+		if [message] =~ /DEL_HOST_DOWNTIME|DEL_SVC_DOWNTIME/ {
+			grok {
+				match => [ 'message', '%{DATA};%{NUMBER:nagios_downtime_id}' ]
+			}
+		}
+		if [message] =~ /DELAY_HOST_NOTIFICATION/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{NUMBER:nagios_epoch_notification_time}' ]
+			}
+			date {
+				match => ['nagios_epoch_notification_time', 'UNIX' ]
+				target => 'nagios_notification_time'
+				remove_field => [ 'nagios_epoch_notification_time' ]
+			}
+		}
+		if [message] =~ /DELAY_SVC_NOTIFICATION/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{DATA:nagios_service};%{NUMBER:nagios_epoch_notification_time}' ]
+			}
+			date {
+				match => ['nagios_epoch_notification_time', 'UNIX' ]
+				target => 'nagios_notification_time'
+				remove_field => [ 'nagios_epoch_notification_time' ]
+			}
+		}
+		if [message] =~ /ABLE_CONTACTGROUP_HOST_NOTIFICATIONS|ABLE_CONTACTGROUP_SVC_NOTIFICATIONS/ {
+			grok {
+				match => [ 'message', '%{DATA};%{GREEDYDATA:nagios_contactgroup}' ]
+			}			
+		}
+		if [message] =~ /ABLE_CONTACT_HOST_NOTIFICATIONS|ABLE_CONTACT_SVC_NOTIFICATIONS/ {
+			grok {
+				match => [ 'message', '%{DATA};%{GREEDYDATA:nagios_contact}' ]
+			}
+		}
+		if [message] =~ /ABLE_HOSTGROUP_HOST_CHECKS|ABLE_HOSTGROUP_HOST_NOTIFICATIONS|ABLE_HOSTGROUP_PASSIVE_HOST_CHECKS|ABLE_HOSTGROUP_PASSIVE_SVC_CHECKS|ABLE_HOSTGROUP_SVC_CHECKS|ABLE_HOSTGROUP_SVC_NOTIFICATIONS/ {
+			grok {
+				match => [ 'message', '%{DATA};%{GREEDYDATA:nagios_hostgroup}' ]
+			}			
+		}
+		if [message] =~ /ABLE_SERVICEGROUP_HOST_CHECKS|ABLE_SERVICEGROUP_HOST_NOTIFICATIONS|ABLE_SERVICEGROUP_PASSIVE_HOST_CHECKS|ABLE_SERVICEGROUP_PASSIVE_SVC_CHECKS|ABLE_SERVICEGROUP_SVC_CHECKS|ABLE_SERVICEGROUP_SVC_NOTIFICATIONS/ {
+			grok {
+				match => [ 'message', '%{DATA};%{GREEDYDATA:nagios_servicegroup}' ]
+			}			
+		}
+		if [message] =~ /PROCESS_FILE/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_process_file};%{GREEDYDATA:nagios_process_file_delete}' ]
+			}
+		}
+		if [message] =~ /PROCESS_HOST_CHECK_RESULT/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{INT:nagios_host_status_code};%{GREEDYDATA:nagios_host_output}' ]
+			}
+		}
+		if [message] =~ /PROCESS_SERVICE_CHECK_RESULT/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{DATA:nagios_service};%{INT:nagios_service_status_code};%{GREEDYDATA:nagios_service_output}' ]
+			}
+		}
+		if [message] =~ /SET_HOST_NOTIFICATION_NUMBER/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{NUMBER:nagios_notification_number}' ]
+			}
+		}
+		if [message] =~ /SET_SVC_NOTIFICATION_NUMBER/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{DATA:nagios_service};%{NUMBER:nagios_notification_number}' ]
+			}
+		}
+		if [message] =~ /CHANGE_CONTACT_HOST_NOTIFICATION_TIMEPERIOD|CHANGE_CONTACT_SVC_NOTIFICATION_TIMEPERIOD/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_contact};%{GREEDYDATA:nagios_timeperiod}' ]
+			}
+		}
+		if [message] =~ /CHANGE_CONTACT_MOD/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_contact};%{GREEDYDATA:nagios_attribute_value}' ]
+			}
+		}
+		if [message] =~ /CHANGE_CUSTOM_CONTACT_VAR/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_contact};%{DATA:nagios_variable_name};%{GREEDYDATA:nagios_variable_value}' ]
+			}
+		}
+		if [message] =~ /CHANGE_CUSTOM_HOST_VAR/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{DATA:nagios_variable_name};%{GREEDYDATA:nagios_variable_value}' ]
+			}
+		}
+		if [message] =~ /CHANGE_CUSTOM_SVC_VAR/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{DATA:nagios_service};%{DATA:nagios_variable_name};%{GREEDYDATA:nagios_variable_value}' ]
+			}
+		}
+		if [message] =~ /CHANGE_GLOBAL_HOST_EVENT_HANDLER|CHANGE_GLOBAL_SVC_EVENT_HANDLER/ {
+			grok {
+				match => [ 'message', '%{DATA};%{GREEDYDATA:nagios_command}' ]
+			}
+		}
+		if [message] =~ /CHANGE_HOST_CHECK_COMMAND|CHANGE_HOST_EVENT_HANDLER/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{GREEDYDATA:nagios_command}' ]
+			}
+		}
+		if [message] =~ /CHANGE_SVC_CHECK_COMMAND|CHANGE_SVC_EVENT_HANDLER/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{DATA:nagios_service};%{GREEDYDATA:nagios_command}' ]
+			}
+		}
+		if [message] =~ /CHANGE_HOST_CHECK_TIMEPERIOD|CHANGE_HOST_NOTIFICATION_TIMEPERIOD/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{GREEDYDATA:nagios_timeperiod}' ]
+			}
+		}
+		if [message] =~ /CHANGE_SVC_CHECK_TIMEPERIOD|CHANGE_SVC_NOTIFICATION_TIMEPERIOD/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{DATA:nagios_service};%{GREEDYDATA:nagios_timeperiod}' ]
+			}
+		}
+		if [message] =~ /CHANGE_HOST_MODATTR/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{GREEDYDATA:nagios_attribute_value}' ]
+			}
+		}
+		if [message] =~ /CHANGE_SVC_MODATTR/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{DATA:nagios_service};%{GREEDYDATA:nagios_attribute_value}' ]
+			}
+		}
+		if [message] =~ /CHANGE_MAX_HOST_CHECK_ATTEMPTS/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{NUMBER:nagios_max_check_attempts}' ]
+			}
+		}
+		if [message] =~ /CHANGE_MAX_SVC_CHECK_ATTEMPTS/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{DATA:nagios_service};%{NUMBER:nagios_max_check_attempts}' ]
+			}
+		}
+		if [message] =~ /CHANGE_NORMAL_HOST_CHECK_INTERVAL/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{NUMBER:nagios_check_interval}' ]
+			}
+		}
+		if [message] =~ /CHANGE_NORMAL_SVC_CHECK_INTERVAL/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{DATA:nagios_service};%{NUMBER:nagios_check_interval}' ]
+			}
+		}
+		if [message] =~ /CHANGE_RETRY_HOST_CHECK_INTERVAL/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{NUMBER:nagios_retry_interval}' ]
+			}
+		}
+		if [message] =~ /CHANGE_RETRY_SVC_CHECK_INTERVAL/ {
+			grok {
+				match => [ 'message', '%{DATA};%{DATA:nagios_host};%{DATA:nagios_service};%{NUMBER:nagios_retry_interval}' ]
+			}
+		}
+	}
+	if [message] =~ /External\scommand\sfailed/ {
+		grok {
+			match => [ 'message', '%{DATA}-> %{DATA:nagios_external_command};' ]
+		}
+	}
+	if [message] =~ /Nagios.*starting/ {
+		grok {
+			match => [ 'message', '%{DATA} (?<nagios_version>%{INT}\.%{INT}\.%{INT}) %{GREEDYDATA}' ]
+		}
+	}
+	if [message] =~ /timed\sout\safter/ {
+		grok {
+			match => [ 'message', '%{DATA} timed out after %{NUMBER:nagios_timeout}s' ]
+		}
+	}
+	mutate {
+		replace => [ 'type', 'nagios_core' ]
+	}
+	date {
+		match => ['epoch_timestamp', 'UNIX' ]
+	}
+}

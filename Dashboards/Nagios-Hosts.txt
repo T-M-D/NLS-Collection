@@ -1,0 +1,857 @@
+{
+  "title": "Nagios - Hosts",
+  "edit_type": "",
+  "services": {
+    "query": {
+      "list": {
+        "0": {
+          "query": "nagios_host_status: down AND nagios_host_state: hard",
+          "alias": "DOWN HARD",
+          "color": "#C15C17",
+          "id": 0,
+          "pin": false,
+          "type": "lucene",
+          "enable": true
+        },
+        "1": {
+          "id": 1,
+          "color": "#705DA0",
+          "alias": "FLAPPING STARTED",
+          "pin": false,
+          "type": "lucene",
+          "enable": true,
+          "query": "nagios_flapping_state: started AND -_exists_: nagios_service"
+        },
+        "2": {
+          "id": 2,
+          "color": "#E5AC0E",
+          "alias": "UNREACHABLE HARD",
+          "pin": false,
+          "type": "lucene",
+          "enable": true,
+          "query": "nagios_host_status: unreachable AND nagios_host_state: hard"
+        },
+        "3": {
+          "id": 3,
+          "color": "#D683CE",
+          "alias": "FLAPPING STOPPED",
+          "pin": false,
+          "type": "lucene",
+          "enable": true,
+          "query": "nagios_flapping_state: stopped AND -_exists_: nagios_service"
+        },
+        "4": {
+          "id": 4,
+          "color": "#629E51",
+          "alias": "UP HARD",
+          "pin": false,
+          "type": "lucene",
+          "enable": true,
+          "query": "nagios_host_status: UP AND nagios_host_state: hard"
+        },
+        "5": {
+          "id": 5,
+          "color": "#E24D42",
+          "alias": "DOWN SOFT",
+          "pin": false,
+          "type": "lucene",
+          "enable": true,
+          "query": "nagios_host_status: down AND nagios_host_state: soft"
+        },
+        "6": {
+          "id": 6,
+          "color": "#EAB839",
+          "alias": "UNREACHABLE SOFT",
+          "pin": false,
+          "type": "lucene",
+          "enable": true,
+          "query": "nagios_host_status: unreachable AND nagios_host_state: soft"
+        },
+        "7": {
+          "id": 7,
+          "color": "#052B51",
+          "alias": "NO HOST",
+          "pin": false,
+          "type": "lucene",
+          "enable": true,
+          "query": "nagios_severity_label: Error AND message: \"but no such host can be found\""
+        }
+      },
+      "ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    "filter": {
+      "list": {
+        "0": {
+          "type": "time",
+          "field": "@timestamp",
+          "from": "now-2d",
+          "to": "now",
+          "mandate": "must",
+          "active": true,
+          "alias": "",
+          "id": 0
+        },
+        "1": {
+          "type": "field",
+          "field": "program",
+          "query": "\"nagios_core\"",
+          "mandate": "must",
+          "active": true,
+          "alias": "",
+          "id": 1
+        }
+      },
+      "ids": [
+        0,
+        1
+      ]
+    }
+  },
+  "rows": [
+    {
+      "title": "Down",
+      "height": "200px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "error": false,
+          "span": 1,
+          "editable": true,
+          "type": "text",
+          "loadingEditor": false,
+          "mode": "html",
+          "content": "<h2 style=\"color: #F83838; text-shadow: 0px 0px 40px black; position: absolute; -webkit-transform: rotate(270deg); left: 10%; top: 40%\">\nDOWN\n</h2>",
+          "style": {},
+          "title": "Down"
+        },
+        {
+          "span": 2,
+          "editable": true,
+          "type": "hits",
+          "loadingEditor": false,
+          "style": {
+            "font-size": "10pt"
+          },
+          "arrangement": "horizontal",
+          "chart": "bar",
+          "counter_pos": "above",
+          "donut": false,
+          "tilt": false,
+          "labels": true,
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              0,
+              5
+            ]
+          },
+          "title": "Hard vs Soft"
+        },
+        {
+          "span": 2,
+          "editable": true,
+          "type": "sparklines",
+          "loadingEditor": false,
+          "mode": "count",
+          "time_field": "@timestamp",
+          "value_field": null,
+          "interval": "3h",
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              0,
+              5
+            ]
+          }
+        },
+        {
+          "span": 3,
+          "editable": true,
+          "type": "trends",
+          "loadingEditor": false,
+          "ago": "7d",
+          "arrangement": "vertical",
+          "reverse": false,
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              0,
+              5
+            ]
+          },
+          "style": {
+            "font-size": "14pt"
+          },
+          "title": "7 Day Trends"
+        },
+        {
+          "error": false,
+          "span": 4,
+          "editable": true,
+          "type": "terms",
+          "loadingEditor": false,
+          "field": "nagios_host",
+          "exclude": [],
+          "missing": false,
+          "other": false,
+          "size": 5,
+          "order": "count",
+          "style": {
+            "font-size": "10pt"
+          },
+          "donut": false,
+          "tilt": false,
+          "labels": true,
+          "arrangement": "horizontal",
+          "chart": "table",
+          "counter_pos": "above",
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              0,
+              5
+            ]
+          },
+          "tmode": "terms",
+          "tstat": "total",
+          "valuefield": "",
+          "title": "Top Hosts"
+        }
+      ],
+      "notice": false
+    },
+    {
+      "title": "Unknown",
+      "height": "300px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "error": false,
+          "span": 1,
+          "editable": true,
+          "type": "text",
+          "loadingEditor": false,
+          "mode": "html",
+          "content": "<h2 style=\"color: orange; text-shadow: 0px 0px 40px black; position: absolute; -webkit-transform: rotate(270deg); left: -42%; top: 45%\">\nUNREACHABLE\n</h2>",
+          "style": {},
+          "title": "Unreachable"
+        },
+        {
+          "span": 2,
+          "editable": true,
+          "type": "hits",
+          "loadingEditor": false,
+          "style": {
+            "font-size": "10pt"
+          },
+          "arrangement": "horizontal",
+          "chart": "bar",
+          "counter_pos": "above",
+          "donut": false,
+          "tilt": false,
+          "labels": true,
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              2,
+              6
+            ]
+          },
+          "title": "Hard vs Soft"
+        },
+        {
+          "span": 2,
+          "editable": true,
+          "type": "sparklines",
+          "loadingEditor": false,
+          "mode": "count",
+          "time_field": "@timestamp",
+          "value_field": null,
+          "interval": "3h",
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              2,
+              6
+            ]
+          }
+        },
+        {
+          "span": 3,
+          "editable": true,
+          "type": "trends",
+          "loadingEditor": false,
+          "ago": "7d",
+          "arrangement": "vertical",
+          "reverse": false,
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              2,
+              6
+            ]
+          },
+          "style": {
+            "font-size": "14pt"
+          },
+          "title": "7 Day Trends"
+        },
+        {
+          "error": false,
+          "span": 4,
+          "editable": true,
+          "type": "terms",
+          "loadingEditor": false,
+          "field": "nagios_host",
+          "exclude": [],
+          "missing": false,
+          "other": false,
+          "size": 5,
+          "order": "count",
+          "style": {
+            "font-size": "10pt"
+          },
+          "donut": false,
+          "tilt": false,
+          "labels": true,
+          "arrangement": "horizontal",
+          "chart": "table",
+          "counter_pos": "above",
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              2,
+              6
+            ]
+          },
+          "tmode": "terms",
+          "tstat": "total",
+          "valuefield": "",
+          "title": "Top Hosts"
+        }
+      ],
+      "notice": false
+    },
+    {
+      "title": "Up",
+      "height": "200px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "error": false,
+          "span": 1,
+          "editable": true,
+          "type": "text",
+          "loadingEditor": false,
+          "mode": "html",
+          "content": "<h2 style=\"color: #33FF00; text-shadow: 0px 0px 50px black; position: absolute; -webkit-transform: rotate(270deg); left: 35%; top: 40%\">\nUP\n</h2>",
+          "style": {}
+        },
+        {
+          "span": 2,
+          "editable": true,
+          "type": "hits",
+          "loadingEditor": false,
+          "style": {
+            "font-size": "10pt"
+          },
+          "arrangement": "horizontal",
+          "chart": "bar",
+          "counter_pos": "above",
+          "donut": false,
+          "tilt": false,
+          "labels": true,
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              4
+            ]
+          },
+          "title": "HARD"
+        },
+        {
+          "span": 2,
+          "editable": true,
+          "type": "sparklines",
+          "loadingEditor": false,
+          "mode": "count",
+          "time_field": "@timestamp",
+          "value_field": null,
+          "interval": "3h",
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              4
+            ]
+          }
+        },
+        {
+          "span": 3,
+          "editable": true,
+          "type": "trends",
+          "loadingEditor": false,
+          "ago": "7d",
+          "arrangement": "vertical",
+          "reverse": false,
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              4
+            ]
+          },
+          "style": {
+            "font-size": "14pt"
+          },
+          "title": "7 Day Trends"
+        },
+        {
+          "error": false,
+          "span": 4,
+          "editable": true,
+          "type": "terms",
+          "loadingEditor": false,
+          "field": "nagios_host",
+          "exclude": [],
+          "missing": false,
+          "other": false,
+          "size": 5,
+          "order": "count",
+          "style": {
+            "font-size": "10pt"
+          },
+          "donut": false,
+          "tilt": false,
+          "labels": true,
+          "arrangement": "horizontal",
+          "chart": "table",
+          "counter_pos": "above",
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              4
+            ]
+          },
+          "tmode": "terms",
+          "tstat": "total",
+          "valuefield": "",
+          "title": "Top Hosts"
+        }
+      ],
+      "notice": false
+    },
+    {
+      "title": "Overall",
+      "height": "300px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "span": 3,
+          "editable": true,
+          "type": "hits",
+          "loadingEditor": false,
+          "style": {
+            "font-size": "10pt"
+          },
+          "arrangement": "horizontal",
+          "chart": "pie",
+          "counter_pos": "above",
+          "donut": false,
+          "tilt": false,
+          "labels": true,
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              0,
+              2,
+              4,
+              5,
+              6
+            ]
+          },
+          "title": "STATES"
+        },
+        {
+          "span": 2,
+          "editable": true,
+          "type": "hits",
+          "loadingEditor": false,
+          "style": {
+            "font-size": "10pt"
+          },
+          "arrangement": "horizontal",
+          "chart": "bar",
+          "counter_pos": "above",
+          "donut": false,
+          "tilt": false,
+          "labels": true,
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              1,
+              3
+            ]
+          },
+          "title": "FLAPPING"
+        },
+        {
+          "error": false,
+          "span": 4,
+          "editable": true,
+          "type": "terms",
+          "loadingEditor": false,
+          "field": "nagios_host",
+          "exclude": [],
+          "missing": false,
+          "other": false,
+          "size": 10,
+          "order": "count",
+          "style": {
+            "font-size": "10pt"
+          },
+          "donut": false,
+          "tilt": false,
+          "labels": true,
+          "arrangement": "horizontal",
+          "chart": "table",
+          "counter_pos": "above",
+          "spyable": true,
+          "queries": {
+            "mode": "all",
+            "ids": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          },
+          "tmode": "terms",
+          "tstat": "total",
+          "valuefield": "",
+          "title": "Top Hosts"
+        },
+        {
+          "error": false,
+          "span": 3,
+          "editable": true,
+          "type": "terms",
+          "loadingEditor": false,
+          "field": "nagios_host",
+          "exclude": [],
+          "missing": false,
+          "other": false,
+          "size": 10,
+          "order": "count",
+          "style": {
+            "font-size": "10pt"
+          },
+          "donut": false,
+          "tilt": false,
+          "labels": true,
+          "arrangement": "horizontal",
+          "chart": "table",
+          "counter_pos": "above",
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              7
+            ]
+          },
+          "tmode": "terms",
+          "tstat": "total",
+          "valuefield": "",
+          "title": "HOSTS MISSING"
+        }
+      ],
+      "notice": false
+    },
+    {
+      "title": "Graph",
+      "height": "300px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "span": 12,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "histogram",
+          "mode": "count",
+          "time_field": "@timestamp",
+          "value_field": null,
+          "auto_int": true,
+          "resolution": 100,
+          "interval": "30m",
+          "fill": 1,
+          "linewidth": 1,
+          "timezone": "browser",
+          "spyable": true,
+          "zoomlinks": true,
+          "bars": false,
+          "stack": true,
+          "points": true,
+          "lines": false,
+          "legend": true,
+          "x-axis": true,
+          "y-axis": true,
+          "percentage": false,
+          "interactive": true,
+          "queries": {
+            "mode": "all",
+            "ids": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          },
+          "title": "Events over time",
+          "intervals": [
+            "auto",
+            "1s",
+            "1m",
+            "5m",
+            "10m",
+            "30m",
+            "1h",
+            "3h",
+            "12h",
+            "1d",
+            "1w",
+            "1M",
+            "1y"
+          ],
+          "options": true,
+          "tooltip": {
+            "value_type": "cumulative",
+            "query_as_alias": true
+          },
+          "scale": 1,
+          "y_format": "none",
+          "grid": {
+            "max": null,
+            "min": 0
+          },
+          "annotate": {
+            "enable": false,
+            "query": "*",
+            "size": 20,
+            "field": "nagios_host",
+            "sort": [
+              "_score",
+              "desc"
+            ]
+          },
+          "pointradius": 6,
+          "show_query": true,
+          "legend_counts": true,
+          "zerofill": false,
+          "derivative": false
+        }
+      ],
+      "notice": false
+    },
+    {
+      "title": "Events",
+      "height": "350px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "title": "All events",
+          "error": false,
+          "span": 12,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "table",
+          "size": 50,
+          "pages": 5,
+          "offset": 0,
+          "sort": [
+            "@timestamp",
+            "desc"
+          ],
+          "style": {
+            "font-size": "9pt"
+          },
+          "overflow": "min-height",
+          "fields": [
+            "@timestamp",
+            "host",
+            "type",
+            "message"
+          ],
+          "localTime": true,
+          "timeField": "@timestamp",
+          "highlight": [
+            "*"
+          ],
+          "sortable": true,
+          "header": true,
+          "paging": true,
+          "spyable": true,
+          "queries": {
+            "mode": "all",
+            "ids": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          },
+          "field_list": true,
+          "status": "Stable",
+          "trimFactor": 900,
+          "normTimes": true,
+          "all_fields": false
+        }
+      ],
+      "notice": false
+    }
+  ],
+  "editable": true,
+  "failover": false,
+  "index": {
+    "interval": "day",
+    "pattern": "[logstash-]YYYY.MM.DD",
+    "default": "NO_TIME_FILTER_OR_INDEX_PATTERN_NOT_MATCHED",
+    "warm_fields": true
+  },
+  "style": "light",
+  "panel_hints": true,
+  "pulldowns": [
+    {
+      "type": "query",
+      "collapse": true,
+      "notice": false,
+      "query": "*",
+      "pinned": true,
+      "history": [
+        "nagios_severity_label: Error AND message: \"but no such host can be found\"",
+        "nagios_host_status: unreachable AND nagios_host_state: soft",
+        "nagios_host_status: down AND nagios_host_state: soft",
+        "nagios_host_status: UP AND nagios_host_state: hard",
+        "nagios_flapping_state: stopped AND -_exists_: nagios_service",
+        "nagios_host_status: unreachable AND nagios_host_state: hard",
+        "nagios_flapping_state: started AND -_exists_: nagios_service",
+        "nagios_host_status: down AND nagios_host_state: hard",
+        "nagios_host_status: warning AND nagios_host_state: soft",
+        "nagios_host_status: warning AND nagios_host_state: hard"
+      ],
+      "remember": 10,
+      "enable": true
+    },
+    {
+      "type": "filtering",
+      "collapse": true,
+      "notice": true,
+      "enable": true
+    }
+  ],
+  "nav": [
+    {
+      "type": "timepicker",
+      "collapse": false,
+      "notice": false,
+      "status": "Stable",
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "2h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d",
+        "2M",
+        "3M",
+        "6M",
+        "9M",
+        "12M"
+      ],
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "timefield": "@timestamp",
+      "now": true,
+      "filter_id": 0,
+      "enable": true
+    }
+  ],
+  "loader": {
+    "save_gist": false,
+    "save_elasticsearch": true,
+    "save_local": true,
+    "save_default": true,
+    "save_temp": true,
+    "save_temp_ttl_enable": true,
+    "save_temp_ttl": "30d",
+    "load_gist": true,
+    "load_elasticsearch": true,
+    "load_elasticsearch_size": 20,
+    "load_local": true,
+    "hide": false
+  },
+  "refresh": false,
+  "dash_type": "elasticsearch"
+}
