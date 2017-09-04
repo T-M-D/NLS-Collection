@@ -2,7 +2,7 @@
 * This filter takes the Nagios Core log data and stores it into many fields
 * This filter works with Nagios XI as it uses Nagios Core in the backend
 * To create the filter in Nagios Log Server
- * Administration > Global Configuration > Inputs > Add Filter
+ * Administration > Global Configuration > Filters > Add Filter
 
 * Your Nagios server will need to send the log data tagged as "nagios_core" for this filter to work
 * To confgure your Nagios server to do this, execute the following commands on your Nagios server (replace xxx.xxx.xxx.xxx with your Nagios Log Server address)

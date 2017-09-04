@@ -1,0 +1,43 @@
+# Nagios XI Create Passive Object
+* This output watches the Nagios Core log data for messages about objects that don't exist
+ * Error: Got host checkresult for 'centos01', but no such host can be found
+ * Error: Got check result for service 'New Service' on host 'centos01'. Unable to find service
+
+* When these messages are detected, the box293_xi_api_create_passive_object.php script is executed on the Nagios Log Server, it will:
+ * Create a new passive Host Object on your Nagios XI server if it is a passive Host checkresult message
+ * Create a new passive Service Object on Nagios XI server if it is a passive Service checkresult message
+  * If the host object for this service does not exist then it will also be created
+* The purpose of this output it to automate the creation of the passive host and service objects in Nagios XI
+
+* About the passive objects created on your Nagios XI server
+ * In Nagios XI, when check results are received from a host or service that do not exist they are added to the "Unconfigured Objects" list
+  * Admin > Monitoring Config > Unconfigured Objects
+ * You can turn these unconfigured objects into hosts and services by running the "Unconfigured Passive Object" Configuration Wizard
+  * The passive objects created by the box293_xi_api_create_passive_object.php script are identical to how the wizard creates them
+
+* The box293_xi_api_create_passive_object.php script can be downloaded from:
+ * https://raw.githubusercontent.com/T-M-D/NXI-Collection/master/API/box293_xi_api_create_passive_object.php
+ * It needs to be placed into the /usr/local/nagioslogserver/scripts/ directory
+
+* This output relies on the Nagios Core Filter which can be downloaded here:
+ * https://raw.githubusercontent.com/T-M-D/NLS-Collection/master/Filters/Nagios_Core.txt
+ * Full instructions are at the top of the file
+
+* Administration > Global Configuration > Show Outputs > Add Output
+ * Your Nagios XI server address (xxx.xxx.xxx.xxx) will need to be defined in the "command" lines below
+ * Your Nagios XI API Key (your_api_key) will need to be defined in the "command" lines below
+
+* The remaining text below is what needs to be added to Nagios Log Server as an input
+
+if [program] == "nagios_core" {
+ if [message] =~ /^Error:\sGot\shost\scheckresult\sfor\s\'/ {
+  exec {
+   command => "/usr/local/nagioslogserver/scripts/box293_xi_api_create_passive_object.php --url='http://xxx.xxx.xxx.xxx/nagiosxi/' --apikey='your_api_key' --type=host --host='%{nagios_host}'"
+  }
+ }
+ if [message] =~ /^Error:\sGot\scheck\sresult\sfor\sservice\s\'/ {
+  exec {
+   command => "/usr/local/nagioslogserver/scripts/box293_xi_api_create_passive_object.php --url='http://xxx.xxx.xxx.xxx/nagiosxi/' --apikey='your_api_key' --type=service --host='%{nagios_host}' --service='%{nagios_service}'"
+  }
+ }
+}
