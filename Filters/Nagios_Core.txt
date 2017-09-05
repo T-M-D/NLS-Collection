@@ -21,7 +21,7 @@ if [program] == 'nagios_core' {
 			match => [ 'message', '%{DATA:nagios_severity_label}: %{GREEDYDATA}' ]
 		}
 	}
-	if [message] =~ /check\sof\shost|check\sfor\shost|host\scheckresult\sfor/ {
+	if [message] =~ /check\sof\shost|check\sfor\shost|host\scheckresult\sfor|Passive\scheck\sresult\swas\sreceived\sfor\shost/ {
 		grok {
 			match => [ 'message', '%{DATA} \'%{DATA:nagios_host}\'%{GREEDYDATA}' ]
 		}

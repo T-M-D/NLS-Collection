@@ -30,12 +30,12 @@
 * The remaining text below is what needs to be added to Nagios Log Server as an input
 
 if [program] == "nagios_core" {
- if [message] =~ /^Error:\sGot\shost\scheckresult\sfor\s\'/ {
+ if [message] =~ /^Error:\sGot\shost\scheckresult\sfor\s\'|^Warning:\s*Passive\scheck\sresult\swas\sreceived\sfor\shost\s\'/ {
   exec {
    command => "/usr/local/nagioslogserver/scripts/box293_xi_api_create_passive_object.php --url='http://xxx.xxx.xxx.xxx/nagiosxi/' --apikey='your_api_key' --type=host --host='%{nagios_host}'"
   }
  }
- if [message] =~ /^Error:\sGot\scheck\sresult\sfor\sservice\s\'/ {
+ if [message] =~ /^Error:\sGot\scheck\sresult\sfor\sservice\s\'|^Warning:\s*Passive\scheck\sresult\swas\sreceived\sfor\sservice\s\'/ {
   exec {
    command => "/usr/local/nagioslogserver/scripts/box293_xi_api_create_passive_object.php --url='http://xxx.xxx.xxx.xxx/nagiosxi/' --apikey='your_api_key' --type=service --host='%{nagios_host}' --service='%{nagios_service}'"
   }
