@@ -26,7 +26,7 @@ if [program] == 'nagios_core' {
 			match => [ 'message', '%{DATA} \'%{DATA:nagios_host}\'%{GREEDYDATA}' ]
 		}
 	}
-	if [message] =~ /service.*on\shost/ {
+	if [message] =~ /service.*on\shost|Service\s\'/ {
 		grok {
 			match => [ 'message', '%{DATA} \'%{DATA:nagios_service}\' %{DATA} \'%{DATA:nagios_host}\'' ]
 		}
@@ -51,11 +51,6 @@ if [program] == 'nagios_core' {
 	if [message] =~ /Host\s\'|results\sof\shost\s'/ {
 		grok {
 			match => [ 'message', '%{DATA} \'%{DATA:nagios_host}\' %{GREEDYDATA}' ]
-		}
-	}
-	if [message] =~ /Service\s\'/ {
-		grok {
-			match => [ 'message', '%{DATA} \'%{DATA:nagios_service}\' %{DATA} \'%{DATA:nagios_host}\' %{GREEDYDATA}' ]
 		}
 	}
 	if [message] =~ /^HOST\sALERT:/ {
