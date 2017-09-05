@@ -84,6 +84,24 @@
           "type": "lucene",
           "enable": true,
           "query": "_exists_: \"nagios_timeout\""
+        },
+        "9": {
+          "id": 9,
+          "color": "#58140C",
+          "alias": "Host No Contact",
+          "pin": false,
+          "type": "lucene",
+          "enable": true,
+          "query": "_exists_:\"nagios_host\" AND NOT _exists_:\"nagios_service\" AND message:\"no default contacts OR contactgroups defined\""
+        },
+        "10": {
+          "id": 10,
+          "color": "#511749",
+          "alias": "Service No Contact",
+          "pin": false,
+          "type": "lucene",
+          "enable": true,
+          "query": "_exists_:\"nagios_host\" AND _exists_:\"nagios_service\" AND message:\"no default contacts OR contactgroups defined\""
         }
       },
       "ids": [
@@ -95,7 +113,9 @@
         5,
         6,
         7,
-        8
+        8,
+        9,
+        10
       ]
     },
     "filter": {
@@ -339,6 +359,106 @@
       "notice": false
     },
     {
+      "title": "Stats Part 3",
+      "height": "200px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "error": false,
+          "span": 5,
+          "editable": true,
+          "type": "terms",
+          "loadingEditor": false,
+          "field": "nagios_host",
+          "exclude": [],
+          "missing": false,
+          "other": false,
+          "size": 10,
+          "order": "count",
+          "style": {
+            "font-size": "10pt"
+          },
+          "donut": false,
+          "tilt": false,
+          "labels": true,
+          "arrangement": "horizontal",
+          "chart": "table",
+          "counter_pos": "above",
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              9
+            ]
+          },
+          "tmode": "terms",
+          "tstat": "total",
+          "valuefield": "",
+          "title": "Hosts With No Contacts"
+        },
+        {
+          "error": false,
+          "span": 5,
+          "editable": true,
+          "type": "terms",
+          "loadingEditor": false,
+          "field": "nagios_service",
+          "exclude": [],
+          "missing": false,
+          "other": false,
+          "size": 10,
+          "order": "count",
+          "style": {
+            "font-size": "10pt"
+          },
+          "donut": false,
+          "tilt": false,
+          "labels": true,
+          "arrangement": "horizontal",
+          "chart": "table",
+          "counter_pos": "above",
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              10
+            ]
+          },
+          "tmode": "terms",
+          "tstat": "total",
+          "valuefield": "",
+          "title": "Services With No Contacts"
+        },
+        {
+          "span": 2,
+          "editable": true,
+          "type": "hits",
+          "loadingEditor": false,
+          "style": {
+            "font-size": "10pt"
+          },
+          "arrangement": "horizontal",
+          "chart": "bar",
+          "counter_pos": "above",
+          "donut": false,
+          "tilt": false,
+          "labels": true,
+          "spyable": true,
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              9,
+              10
+            ]
+          },
+          "title": "No Contacts"
+        }
+      ],
+      "notice": false
+    },
+    {
       "title": "Graph",
       "height": "300px",
       "editable": true,
@@ -383,7 +503,9 @@
               5,
               6,
               7,
-              8
+              8,
+              9,
+              10
             ]
           },
           "title": "Events over time",
@@ -486,7 +608,9 @@
               5,
               6,
               7,
-              8
+              8,
+              9,
+              10
             ]
           },
           "field_list": true,
@@ -526,6 +650,8 @@
       "query": "*",
       "pinned": true,
       "history": [
+        "_exists_:\"nagios_host\" AND _exists_:\"nagios_service\" AND message:\"no default contacts OR contactgroups defined\"",
+        "_exists_:\"nagios_host\" AND NOT _exists_:\"nagios_service\" AND message:\"no default contacts OR contactgroups defined\"",
         "_exists_: \"nagios_timeout\"",
         "nagios_downtime_fixed: 0",
         "_exists_: nagios_author",
@@ -533,9 +659,7 @@
         "nagios_external_command: \"RESTART_PROGRAM\"",
         "\"starting... (PID=\"",
         "SIGSEGV",
-        "_exists_: nagios_version",
-        "\"shutdown... (PID=\"",
-        "*"
+        "_exists_: nagios_version"
       ],
       "remember": 10,
       "enable": true
