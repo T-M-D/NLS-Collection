@@ -1,6 +1,10 @@
 # Nagios Core Filter
 * This filter takes the Nagios Core log data and stores it into many fields
 * This filter works with Nagios XI as it uses Nagios Core in the backend
+
+* Full documentation on how to use this filter can be located here:
+ * https://assets.nagios.com/downloads/nagios-log-server/docs/Sending-Nagios-Core-Logs-To-Nagios-Log-Server.pdf
+
 * To create the filter in Nagios Log Server
  * Administration > Global Configuration > Filters > Add Filter
 
