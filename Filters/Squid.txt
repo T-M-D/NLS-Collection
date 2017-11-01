@@ -1,0 +1,31 @@
+# Squid Filter
+* This filter takes the Squid log data and stores it into many fields
+* To create the filter in Nagios Log Server
+ * Administration > Global Configuration > Filters > Add Filter
+
+* Your Squids server will need to send the log data tagged as "squid_access" and "squid_cache" for this filter to work
+* To confgure your Squid server to do this, execute the following commands on your Squid server (replace xxx.xxx.xxx.xxx with your Nagios Log Server address)
+ * curl -s -O http://xxx.xxx.xxx.xxx/nagioslogserver/scripts/setup-linux.sh
+ * sudo bash setup-linux.sh -s xxx.xxx.xxx.xxx -p 5544 -f "/var/log/squid/access.log" -t squid_access
+ * sudo bash setup-linux.sh -s xxx.xxx.xxx.xxx -p 5544 -f "/var/log/squid/cache.log" -t squid_cache
+
+* The remaining text below is what needs to be added to Nagios Log Server as an input
+
+if [program] == 'squid_access' {
+	grok {
+		match => [ 'message', '%{NUMBER:timestamp}\s+%{NUMBER:request_msec:float} %{IPORHOST:src_ip} %{WORD:cache_result}/%{NUMBER:response_status:int} %{NUMBER:response_size:int} %{WORD:http_method} (%{URIPROTO:protocol}://)?%{IPORHOST:dst_host}(?::%{POSINT:dst_port})?(?:%{URIPATHPARAM:uri_param})? %{USERNAME:cache_user} %{WORD:request_route}/(%{IPORHOST:forwarded_to}|-) %{GREEDYDATA:content_type}' ]
+	}
+	mutate {
+		replace => [ 'type', 'squid_access' ]
+		replace => [ 'program', 'squid']
+	}
+}
+if [program] == 'squid_cache' {
+	grok {
+		match => [ 'message', '%{DATESTAMP}( %{WORD:kid})?\|\s+%{GREEDYDATA:log_data}' ]
+	}
+	mutate {
+		replace => [ 'type', 'squid_cache' ]
+		replace => [ 'program', 'squid']
+	}
+}
