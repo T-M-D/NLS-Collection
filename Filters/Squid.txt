@@ -3,7 +3,7 @@
 * To create the filter in Nagios Log Server
  * Administration > Global Configuration > Filters > Add Filter
 
-* Your Squids server will need to send the log data tagged as "squid_access" and "squid_cache" for this filter to work
+* Your Squid server will need to send the log data tagged as "squid_access" and "squid_cache" for this filter to work
 * To confgure your Squid server to do this, execute the following commands on your Squid server (replace xxx.xxx.xxx.xxx with your Nagios Log Server address)
  * curl -s -O http://xxx.xxx.xxx.xxx/nagioslogserver/scripts/setup-linux.sh
  * sudo bash setup-linux.sh -s xxx.xxx.xxx.xxx -p 5544 -f "/var/log/squid/access.log" -t squid_access
