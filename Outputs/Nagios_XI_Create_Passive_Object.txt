@@ -15,6 +15,9 @@
  * You can turn these unconfigured objects into hosts and services by running the "Unconfigured Passive Object" Configuration Wizard
   * The passive objects created by the box293_xi_api_create_passive_object.php script are identical to how the wizard creates them
 
+* Full documentation on how to use this output can be located here:
+ * https://assets.nagios.com/downloads/nagios-log-server/docs/Using-An-Output-To-Create-Nagios-XI-Passive-Objects.pdf
+
 * The box293_xi_api_create_passive_object.php script can be downloaded from:
  * https://raw.githubusercontent.com/T-M-D/NXI-Collection/master/API/box293_xi_api_create_passive_object.php
  * It needs to be placed into the /usr/local/nagioslogserver/scripts/ directory
