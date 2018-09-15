@@ -1,0 +1,124 @@
+---
+# Ansible Playbook for upgrading Nagios Log Server
+#  
+# This playbook automates all steps mentioned in https://assets.nagios.com/downloads/nagios-log-server/docs/Upgrade-Instructions-For-Nagios-Log-Server.pdf
+# version 0.2
+# known issue: this playbooks re-enables shard allocation on the second host 
+# customize this: "nls-cluster" should be an inventory group containing all Nagios Log Server nodes
+
+- hosts: nls-cluster
+  serial: 1  # do NOT run hosts in parallel
+  vars:
+    ncpa_token: demo-token
+    nls_latest_url: https://assets.nagios.com/downloads/nagios-log-server/nagioslogserver-latest.tar.gz
+    nls_latest_file: nagioslogserver-latest.tar.gz
+    nls_current_version: /var/www/html/nagioslogserver/lsversion
+    tmpdir: /tmp
+  vars_prompt:
+    - name: "downtime"
+      prompt: "Did you arrange downtime in Nagios for this upgrade? You may press <enter> if you did."
+      default: "yes"
+  become: true
+
+  tasks:
+
+  - name: Only abort if no downtime was set
+    fail:
+      msg: "Answer to downtime questions was: {{  downtime }}. Please administer downtime and run this playbook again."
+    when: 'downtime != "yes"'
+
+  - name: Get Elasticsearch Cluster health
+    uri:
+      url: "http://localhost:9200/_cluster/health?pretty"
+      return_content: yes
+    register: health_json_response
+
+  - name: Evaluate Elasticsearch Cluster health
+    debug:
+      msg: "Current Cluster Health Status should be green, current status is {{  (health_json_response.content|from_json)['status'] }}."
+    # update on second node fails because of cluster green requirement, run_once is no option because of "serial"
+    # https://docs.ansible.com/ansible/2.6/user_guide/playbooks_delegation.html?highlight=ansible_play_hosts#run-once
+    when: inventory_hostname == ansible_play_hosts[0]
+    failed_when: health_json_response.json.status != "green"
+
+  - name: Get Shard Allocation Settings
+    uri:
+      url: "http://localhost:9200/_cluster/settings?pretty"
+      return_content: yes
+    register: alloc1_json_response
+
+  - name: Display Shard Allocation Settings
+    debug:
+      #msg: "{{  (json_response.content|from_json)['transient']['cluster'] }}"
+      msg: "Current transient.cluster.routing.allocation.enable value is {{  (alloc1_json_response.content|from_json).transient.cluster.routing.allocation.enable }}"
+    when: alloc1_json_response.json.transient.cluster is defined
+
+  # curl -XPUT localhost:9200/_cluster/settings -d '{"transient":{"cluster.routing.allocation.enable":"none"}}'
+  - name: Disable shard allocation
+    uri:
+      url: "http://localhost:9200/_cluster/settings"
+      body: '{"transient":{"cluster.routing.allocation.enable":"none"}}'
+      body_format: json
+      return_content: yes
+      method: PUT
+    register: alloc_disable_json_response
+
+  - name: Get NLS latest version
+    get_url:
+      dest: "{{ tmpdir }}/{{ nls_latest_file }}"
+      url: "{{ nls_latest_url }}"
+      force: no # if file exists don't download and go ahead. Normally you would need to get rid of old tarballs.
+
+  - name: Unzip NLS tarball
+    unarchive:
+      src: "{{ tmpdir }}/{{ nls_latest_file }}"
+      dest: /tmp
+      remote_src: True
+
+  - name: Run upgrade script non-interactive
+    command: "./upgrade -n"
+    args:
+     chdir: "{{ tmpdir }}/nagioslogserver"
+    register: upgrade_output
+
+  - name: Show upgrade output
+    debug:
+      msg: "{{ upgrade_output }}"
+
+# tasks after update: enable shard allocation on one node (skip on others)
+
+
+  post_tasks:
+
+# wait_for should be places here (to prevent connection refused)
+
+  - name: Wait 20 seconds for port 9200 to become open on the host, don't start checking for 8 seconds
+    wait_for: timeout=20
+    port: 9200
+    delay: 8
+
+  - name: Get Shard Allocation Settings
+    uri:
+      url: "http://localhost:9200/_cluster/settings?pretty"
+      return_content: yes
+    register: alloc2_json_response
+
+  - name: Display Shard Allocation Settings
+    debug:
+      #msg: "{{  (alloc2_json_response.content|from_json)['transient']['cluster'] }}"
+      #BUG it disables on node 1 right after upgrading while node 2 has not been touched at all. Should be inside a block
+      msg: "Current transient.cluster.routing.allocation.enable value is {{  (alloc2_json_response.content|from_json).transient.cluster.routing.allocation.enable }}"
+
+# curl -XPUT localhost:9200/_cluster/settings -d '{"transient":{"cluster.routing.allocation.enable":"all"}}'
+  - name: Enable shard allocation
+    uri:
+      url: 'http://localhost:9200/_cluster/settings'
+      body: '{"transient":{"cluster.routing.allocation.enable":"all"}}'
+      body_format: json
+      return_content: yes
+      method: PUT
+    when:
+    - alloc2_json_response.json.transient.cluster.routing.allocation.enable == "none"
+    - inventory_hostname != ansible_play_hosts[0]
+    # this will disable shard allocation on the second host (counting starts from 0) so it's ONLY ok for 2-node clusters
+    register: alloc_enable_json_response
