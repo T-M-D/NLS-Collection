@@ -34,3 +34,6 @@ A collection of add-ons for Nagios Log Server.
   * Dashboards > Load (Folder icon) > Advanced > Browse
   * Once you upload a dashboard it needs to be saved using the Save As button
 
+## Playbooks
+* Ansible playbook to update Nagios Log Server\
+example: `ansible-playbook nls_update.yml -e "{downtime: 'yes'}"`
