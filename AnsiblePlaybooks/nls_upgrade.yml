@@ -1,22 +1,23 @@
 ---
 # Ansible Playbook for upgrading Nagios Log Server
-#  
+#
 # This playbook automates all steps mentioned in https://assets.nagios.com/downloads/nagios-log-server/docs/Upgrade-Instructions-For-Nagios-Log-Server.pdf
-# version 0.2
-# known issue: this playbooks re-enables shard allocation on the second host 
-# customize this: "nls-cluster" should be an inventory group containing all Nagios Log Server nodes
+# version 0.3
+# author: Jørgen (Conclusion Xforce)
+# known issue: this playbooks re-enables shard allocation on the second host (a 2-node cluster is assumed here)
+# customize this: "nlscluster" should be an inventory group containing all Nagios Log Server nodes 
 
-- hosts: nls-cluster
-  serial: 1  # do NOT run hosts in parallel
+
+- hosts: nlscluster
+  serial: 1  # purpose: do _not_ run hosts in parallel
   vars:
-    ncpa_token: demo-token
     nls_latest_url: https://assets.nagios.com/downloads/nagios-log-server/nagioslogserver-latest.tar.gz
     nls_latest_file: nagioslogserver-latest.tar.gz
     nls_current_version: /var/www/html/nagioslogserver/lsversion
     tmpdir: /tmp
   vars_prompt:
     - name: "downtime"
-      prompt: "Did you arrange downtime in Nagios for this upgrade? You may press <enter> if you did."
+      prompt: "Did you arrange downtime in your monitoring tool for this upgrade? You may press <enter> if you did."
       default: "yes"
   become: true
 
@@ -24,7 +25,7 @@
 
   - name: Only abort if no downtime was set
     fail:
-      msg: "Answer to downtime questions was: {{  downtime }}. Please administer downtime and run this playbook again."
+      msg: "Answer to downtime questions was: {{  downtime }}. Please manage downtime and run this playbook again."
     when: 'downtime != "yes"'
 
   - name: Get Elasticsearch Cluster health
@@ -86,7 +87,6 @@
       msg: "{{ upgrade_output }}"
 
 # tasks after update: enable shard allocation on one node (skip on others)
-
 
   post_tasks:
 
